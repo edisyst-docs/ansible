@@ -1,0 +1,26 @@
+version: '3'
+services:
+  master:
+    build: ansible-docker/master
+    container_name: master
+    networks:
+      - mynet
+    volumes:
+      - ./master/ansible:/etc/ansible
+    command: /bin/bash -c "while ! ssh-keyscan slave1 slave2 > /root/.ssh/known_hosts; do sleep 1; done && sshpass -p root ssh-copy-id root@slave1 && sshpass -p root ssh-copy-id root@slave2 && /usr/sbin/sshd -D"
+
+  slave1:
+    build: ansible-docker/slave1
+    container_name: slave1
+    networks:
+      - mynet
+  slave2:
+    build: ansible-docker/slave1
+    container_name: slave2
+    networks:
+      - mynet
+
+networks:
+  mynet:
+    driver: bridge
+    

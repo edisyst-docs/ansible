@@ -1,0 +1,6 @@
+
+[servers]
+client1 ansible_host=192.168.1.100 ansible_ssh_private_key_file=/etc/ansible/keypairs/client1 ansible_user=root
+client2 ansible_host=192.168.1.200 ansible_ssh_private_key_file=/etc/ansible/keypairs/client2 ansible_user=root
+
+

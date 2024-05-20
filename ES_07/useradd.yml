@@ -1,0 +1,12 @@
+# Example from Ansible Playbook
+- hosts: all
+  tasks:
+  - name: Ansible create user example.
+    user:
+      name: utente
+      password: $y$j9T$bQFqsnN7qkV4OJb7PWJ2i1$epXq0gTsqOByKxItA84kldNDZ4otVUaA64qfmzXfJ0
+  tasks:
+  - name: Ansible add user to group example.
+    user:
+      name: utente
+      groups: wheel

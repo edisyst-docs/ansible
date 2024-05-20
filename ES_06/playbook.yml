@@ -1,0 +1,9 @@
+# Example from Ansible Playbook
+- hosts: linuxservers
+  tasks:
+    - copy:
+        src: /prova_ansible/test.txt
+        dest: /etc/provaprova.conf
+        owner: root
+        group: root
+        mode: 0644
