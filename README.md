@@ -40,11 +40,53 @@ Nella realtà io userò sempre un `playbook` per le istruzioni da dare agli host
 Playbook = elenco dei task (eseguiti sempre) e degli handler (eseguiti se cambia qualcosa) da lanciare sugli host
 ```bash
 ansible-playbook <hosts> <my_playbook.yml>
-ansible-playbook -i inventory.yaml playbook.yaml
+ansible-playbook -i inventory.yml playbook.yml
 
+ansible-lint    # tool per fare il lint dei playbook: se voglio posso installarlo
+ansible-lint -L # elenco dei comandi disponibili
+ansible-lint playbook1.yml -v # verifica VERBOSA del playbook
 ```
 
-# Moduli
+### Esempio semplice
+```yaml
+---                           # delimitatore che indica l'inizio di uno YAML
+- name: Basic playbook        # nome facoltativo
+  hosts: localhost            # target host dove devo eseguire il playbook
+  tasks:                      # task da eseguire nel playbook
+    - name: Print a message
+      debug:
+        msg: "Hello world!!!"
+```
+
+### Esempio più complesso
+```yaml
+---                           
+- name: Install Apache webserver        
+  hosts: webservers              # elenco target host
+  become: yes                    # dice ad Ansible si usare sudo per lanciare i comandi
+  tasks:                      
+    - name: Install Apache
+      apt:                       # modulo Ansible da usare: installatore di pkg
+        name: httpd              # pacchetto da installare con apt
+        state: present           # il pacchetto deve essere installato, se non è già presente
+    - name: Start Apache
+      service:                   # modulo Ansible da usare: gestione servizi sugli host target
+        name: httpd
+        state: started           # il servizio deve essere avviato
+        enabled: true            # il servizio deve essere avviato all'avvio della macchina
+```
+```ini
+[webservers]
+192.168.33.10
+192.168.33.20
+
+[dbservers]
+192.168.1.100
+```
+
+
+
+# Moduli (quelli che eseguo come task o handlers)
 - `copy`: https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html
 - `lineinfile` verifica che ci sia una particolare linea di codice nel file
 - `file` fa operazioni sulle proprietà dei file

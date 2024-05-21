@@ -1,3 +1,4 @@
+---
 - name: My first play
   hosts: myhosts
 
