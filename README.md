@@ -33,6 +33,7 @@ ansible -i hosts -m ping --private-key demokey -u vagrant
 
 # PLAYBOOK
 - https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html#about-playbooks
+- https://ansible.readthedocs.io/projects/lint/rules/command-instead-of-shell/
 - Nota: scrivere `ansible.builtin.copy` oppure `copy` nel playbook è la stessa cosa
 
 Nella realtà io userò sempre un `playbook` per le istruzioni da dare agli host, non metto le istruzioni inline
