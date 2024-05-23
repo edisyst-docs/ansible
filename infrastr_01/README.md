@@ -14,24 +14,23 @@ Ecco i passaggi dettagliati per configurare questa infrastruttura:
 
 ### 1. Creare il file docker-compose.yml
 Nella directory principale del progetto, crea un file `docker-compose.yml`:
-
 ```yaml
 version: '3'
 services:
   master:
-    build: master
+    build: ./master
     container_name: master
     networks:
       - mynet
     volumes:
       - ./master/ansible:/etc/ansible
   slave1:
-    build: slave
-    container_name: slave
+    build: ./slave
+    container_name: slave1
     networks:
       - mynet
   slave2:
-    build: slave
+    build: ./slave
     container_name: slave2
     networks:
       - mynet
@@ -42,11 +41,9 @@ networks:
 ```
 
 ### 2. Creare la directory per il master e per le slave
-Crea una directory per il progetto e all'interno di essa crea altre tre directory: `master`, `slave1` e `slave2`.
+Crea le seguenti directory: `master` e `slave`.
 ```bash
-mkdir ansible-docker
-cd ansible-docker
-mkdir master slave slave2
+mkdir master slave
 ```
 
 
@@ -55,10 +52,13 @@ mkdir master slave slave2
 ```dockerfile
 FROM ubuntu:latest
 
-# Install Ansible and SSH
+# Install necessary packages
 RUN apt-get update && \
-    apt-get install -y ansible openssh-client openssh-server && \
+    apt-get install -y ansible openssh-client openssh-server sshpass && \
     apt-get clean
+
+# Create required directory for SSH
+RUN mkdir -p /run/sshd
 
 # Create Ansible directory
 RUN mkdir -p /etc/ansible
@@ -66,11 +66,35 @@ RUN mkdir -p /etc/ansible
 # Generate SSH keys for the master
 RUN ssh-keygen -q -N "" -f /root/.ssh/id_rsa
 
-# Copy the public key to known hosts
-RUN touch /root/.ssh/known_hosts
+# Add ssh config to disable host key checking
+RUN echo "Host *\n\tStrictHostKeyChecking no\n" > /root/.ssh/config
+
+# Copy the Ansible configuration files
+COPY ansible/ /etc/ansible/
+
+CMD ["/usr/sbin/sshd", "-D"]
+```
+Alternativamente, possiamo usare un altro metodo per aggiungere la configurazione SSH senza includere caratteri indesiderati:
+```dockerfile
+FROM ubuntu:latest
+
+# Install necessary packages
+RUN apt-get update && \
+    apt-get install -y ansible openssh-client openssh-server sshpass && \
+    apt-get clean
+
+# Create required directory for SSH
+RUN mkdir -p /run/sshd
+
+# Create Ansible directory
+RUN mkdir -p /etc/ansible
+
+# Generate SSH keys for the master
+RUN ssh-keygen -q -N "" -f /root/.ssh/id_rsa
 
 # Add ssh config to disable host key checking
-RUN echo -e "Host *\n\tStrictHostKeyChecking no\n" >> /root/.ssh/config
+RUN echo "Host *" > /root/.ssh/config && \
+    echo "    StrictHostKeyChecking no" >> /root/.ssh/config
 
 # Copy the Ansible configuration files
 COPY ansible/ /etc/ansible/
@@ -82,18 +106,15 @@ CMD ["/usr/sbin/sshd", "-D"]
 ```dockerfile
 FROM ubuntu:latest
 
-# Install SSH server
+# Install SSH server and Python
 RUN apt-get update && \
-    apt-get install -y openssh-server && \
+    apt-get install -y openssh-server python3 && \
     apt-get clean
 
 # Configure SSH server
-RUN mkdir /var/run/sshd
+RUN mkdir -p /run/sshd
 RUN echo 'root:root' | chpasswd
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-
-# Install any additional packages you need
-RUN apt-get install -y python3
 
 CMD ["/usr/sbin/sshd", "-D"]
 ```
@@ -128,24 +149,35 @@ slave2 ansible_host=slave2
       command: echo "Hello from {{ inventory_hostname }}"
 ```
 
-## 5. Copiare la chiave SSH pubblica del master nelle slave
-Aggiungi al file `docker-compose.yml` i seguenti comandi per copiare la chiave pubblica SSH del master nelle slave:
-```yaml
-services:
-  master:
-    ...
-    command: /bin/bash -c "while ! ssh-keyscan slave slave2 > /root/.ssh/known_hosts; do sleep 1; done && sshpass -p root ssh-copy-id root@slave && sshpass -p root ssh-copy-id root@slave2 && /usr/sbin/sshd -D"
 
-```
-
-## 6. Avviare i container
+## 5. Avviare i container docker-compose
 Nella directory principale del progetto, esegui il comando:
 ```bash
 docker-compose up --build
 ```
+Verificare che tutti i container siano in esecuzione:
+```bash
+docker ps
+```
+
+
+## 6. Copiare manualmente la chiave SSH:
+Accedere al container `master` tramite il comando:
+```bash
+docker exec -it master bash
+```
+All'interno del container `master` eseguire i seguenti comandi:
+```bash
+ssh-keyscan slave1 >> /root/.ssh/known_hosts
+ssh-keyscan slave2 >> /root/.ssh/known_hosts
+
+sshpass -p root ssh-copy-id root@slave1
+sshpass -p root ssh-copy-id root@slave2
+```
+
 
 ## 7. Verificare l'infrastruttura
-Una volta che i container sono in esecuzione, puoi accedere al container master ed eseguire il playbook di Ansible:
+Sempre all'interno del container `master` eseguire il playbook di Ansible:
 ```bash
 docker exec -it master bash
 ansible-playbook /etc/ansible/playbook.yml
