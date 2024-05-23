@@ -19,19 +19,19 @@ Nella directory principale del progetto, crea un file `docker-compose.yml`:
 version: '3'
 services:
   master:
-    build: ansible-docker/master
+    build: master
     container_name: master
     networks:
       - mynet
     volumes:
       - ./master/ansible:/etc/ansible
   slave1:
-    build: ansible-docker/slave1
-    container_name: slave1
+    build: slave
+    container_name: slave
     networks:
       - mynet
   slave2:
-    build: ansible-docker/slave1
+    build: slave
     container_name: slave2
     networks:
       - mynet
@@ -46,7 +46,7 @@ Crea una directory per il progetto e all'interno di essa crea altre tre director
 ```bash
 mkdir ansible-docker
 cd ansible-docker
-mkdir master slave1 slave2
+mkdir master slave slave2
 ```
 
 
@@ -134,7 +134,7 @@ Aggiungi al file `docker-compose.yml` i seguenti comandi per copiare la chiave p
 services:
   master:
     ...
-    command: /bin/bash -c "while ! ssh-keyscan slave1 slave2 > /root/.ssh/known_hosts; do sleep 1; done && sshpass -p root ssh-copy-id root@slave1 && sshpass -p root ssh-copy-id root@slave2 && /usr/sbin/sshd -D"
+    command: /bin/bash -c "while ! ssh-keyscan slave slave2 > /root/.ssh/known_hosts; do sleep 1; done && sshpass -p root ssh-copy-id root@slave && sshpass -p root ssh-copy-id root@slave2 && /usr/sbin/sshd -D"
 
 ```
 
