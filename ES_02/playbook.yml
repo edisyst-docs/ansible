@@ -4,7 +4,7 @@
 
   tasks:
     - name: Apache config file is updated
-      ansible.builtin.copy:
+      copy:
         src: /srv/httpd.j2
         dest: /etc/httpd.conf
       notify:
@@ -12,6 +12,6 @@
 
   handlers:
     - name: Restart apache
-      ansible.builtin.service:
+      service:
         name: httpd
         state: restarted

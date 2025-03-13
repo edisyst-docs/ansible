@@ -98,7 +98,7 @@ ansible-lint playbook1.yml -v # verifica VERBOSA del playbook
 - https://www.youtube.com/watch?v=iTplOLc64gs&t=580s
 
 Ansible di default si collega in SSH su macchine che hanno già la chiave precondivisa, così da non dover trasmettere la passw di root ad ogni comando. 
-Potrei specificare user+passw di ogni macchina su un file in chiaro ma è poco sicuro. Conviene creare la chiave in ogni macchina remota così che Ansible possa collevarsi via SSH senza pasword. 
+Potrei specificare user+passw di ogni macchina su un file in chiaro ma è poco sicuro. Conviene creare la chiave in ogni macchina remota così che Ansible possa collegarsi via SSH senza pasword. 
 
 Se faccio `ssh root@192.168.1.100` mi viene chiesta la chiave e la password di root.
 ```bash
@@ -117,7 +117,7 @@ Dentro `servers`:
 ---
 ansible_ssh_user: root
 ```
-Ansible di default cerca di collegarsi con lo stesso utente con cui lancio i comandi, root nel mio caso (in questo caso è inutile quindi il file `servers`)
+Ansible di default cerca di collegarsi con lo stesso utente con cui lancio i comandi, root nel mio caso (quindi in questo caso il file `servers` non servirebbe)
 ```bash
 ansible -m ping linuxservers # pingo gli host del gruppo linuxservers
 ansible -m ping all          # pingo tutti gli host
@@ -126,7 +126,7 @@ Mi risponderà il primo host ma non il secondo, perchè il secondo non ha ancora
 
 
 ### ES 05: credenziali in chiaro sulla macchina Ansible (da NON fare)
-Sul nuovo `hosts.ini` aggiungo le credenziali di accesso
+Sul nuovo `hosts.ini` aggiungo le credenziali di accesso  
 Su `ansible.cfg` devo aggiungere/decommentare `host_key_checking=False`, poi dalla macchina ansible faccio:
 ```bash
 ansible -m ping linuxservers # pingo gli host del gruppo linuxservers
@@ -139,7 +139,7 @@ Anche se rimuovo le chiavi dalle macchine host, il ping và perchè le stò indi
 ```bash
 touch playbook.yml # gli metto le istruzioni
 vim test.txt       # ci scrivo qualcosa giusto per prova
-ansible-playbook playbook.yaml
+ansible-playbook playbook.yml
 ```
 
 
@@ -168,8 +168,8 @@ ansible -m ping all
 
 Nei playbook la password và scritta hashata. Per farlo basta fare su una macchina qualsiasi
 ```bash
-useradd utente # creo utente
-passwd utente  # creo passw: digito "password" per esempio
+useradd utente       # creo utente
+passwd utente        # creo passw: digito "password" per esempio
 sudo cat /etc/shadow # in fondo c'è la password hashata (copio fino a prima dei due punti :)
 ```
 Ora posso provare il playbook
@@ -179,7 +179,7 @@ ansible-playbook useradd.yml #
 Nelle client provo a fare
 ```bash
 su - utente # mi loggo come utente, dovrebbe essere del gruppo wheel, che fa parte di root
-sudo su # dovrebbe poter fare sudo su con password "password"
+sudo su     # dovrebbe poter fare sudo su con password "password"
 ```
 
 https://www.youtube.com/watch?v=YNmNw7oQpuw 12:36
