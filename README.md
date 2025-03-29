@@ -15,7 +15,7 @@ Ci sono due elementi essenziali:
 - Lo scrivo in YAML che è più leggibile
 - Lo scrivo in INI se diventa troppo lungo
 
-Di default il file è `/etc/andible/hosts`
+Di default il file è `/etc/ansible/hosts`
 
 Contiene l'elenco degli host (macchine), e l'elenco dei Groups (gruppi di host), e delle variabili (per dare delle proprietà a 1 o + host/group)
 
