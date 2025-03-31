@@ -9,6 +9,8 @@
       apt:
         update_cache: yes
 
+    # TEST:
+    # ansible all -m shell -a "git --version"
     - name: Installare Git
       apt:
         name: git
@@ -19,27 +21,92 @@
         name: apache2
         state: present
 
-#    - name: Avviare Apache
-#      systemd:
-#        name: apache2
-#        state: reloaded
-#        enabled: yes
+    # TEST:
+    # ansible all -m shell -a "systemctl status apache2"
+    - name: Avviare Apache2
+      shell: service apache2 start
 
     - name: Installare MySQL
       apt:
         name: mysql-server
         state: present
 
-#    - name: Avviare MySQL
-#      systemd:
-#        name: mysql
-#        state: started
-#        enabled: yes
+    # TEST:
+    # ansible all -m shell -a "mysql --version"
+    - name: Avviare MySQL
+      apt:
+        name: mysql-server
+        state: present
+
+    - name: Avviare MySQL
+      shell: service mysql start
+
+    - name: Installare pacchetti richiesti per repository PPA
+      apt:
+        name: software-properties-common
+        state: present
 
     - name: Aggiungere repository PHP
       shell: add-apt-repository -y ppa:ondrej/php && apt-get update
 
+    # TEST:
+    # ansible all -m shell -a "php -v"
     - name: Installare PHP 7.1
       apt:
-        name: php7.1
+#        name: php7.1
+        name:
+          - php7.1-cli
+          - php7.1-curl
+          - php7.1-fpm
+          - php7.1-intl
+          - php7.1-mysql
+          - php7.1-xml
         state: present
+
+    # TEST:
+    # ansible all -m shell -a "composer --version"
+    - name: Download Composer
+      script: ./scripts/install_composer.sh
+
+    - name: Spostare eseguibile di Composer
+      become: true
+      command: "mv composer.phar /usr/local/bin/composer"
+
+    - name: Settaggio permessi Composer
+      become: true
+      file:
+        path: /usr/local/bin/composer
+        mode: "a+x"
+
+    # TEST:
+    # ansible all -m shell -a "ls /var/www/symfony"
+    - name: Clonare repository Symfony
+      git:
+        repo: 'https://github.com/symfony/skeleton.git'
+        dest: /var/www/symfony
+
+#    - name: Installare dipendenze Symfony
+#      shell: cd /var/www/symfony && composer install
+
+    - name: Impostare permessi
+      file:
+        path: /var/www/symfony
+        owner: www-data
+        group: www-data
+        recurse: yes
+
+    - name: Creare VirtualHost per Symfony
+      copy:
+        dest: /etc/apache2/sites-available/symfony.conf
+        content: |
+          <VirtualHost *:80>
+              ServerAdmin webmaster@localhost
+              DocumentRoot /var/www/symfony/public
+              <Directory /var/www/symfony/public>
+                  AllowOverride All
+                  Require all granted
+              </Directory>
+          </VirtualHost>
+
+#    - name: Abilitare VirtualHost e riscrittura mod_rewrite
+#      shell: a2ensite symfony.conf && a2enmod rewrite && systemctl restart apache2
