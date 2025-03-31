@@ -1,9 +1,45 @@
 ---
-- hosts: slaves
+- hosts: slave1
+  become: true
   tasks:
-    - name: Ensure Python is installed
+    - name: Test connessione Ansible
+      ping:
+
+    - name: Aggiornare pacchetti
       apt:
-        name: python3
+        update_cache: yes
+
+    - name: Installare Git
+      apt:
+        name: git
         state: present
-    - name: Test command
-      command: echo "Hello from {{ inventory_hostname }}"
+
+    - name: Installare Apache
+      apt:
+        name: apache2
+        state: present
+
+#    - name: Avviare Apache
+#      systemd:
+#        name: apache2
+#        state: reloaded
+#        enabled: yes
+
+    - name: Installare MySQL
+      apt:
+        name: mysql-server
+        state: present
+
+#    - name: Avviare MySQL
+#      systemd:
+#        name: mysql
+#        state: started
+#        enabled: yes
+
+    - name: Aggiungere repository PHP
+      shell: add-apt-repository -y ppa:ondrej/php && apt-get update
+
+    - name: Installare PHP 7.1
+      apt:
+        name: php7.1
+        state: present

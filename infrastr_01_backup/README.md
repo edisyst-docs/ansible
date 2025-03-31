@@ -3,7 +3,6 @@ Creare con un Docker container una `infrastruttura costituita da 3 macchine`:
 una (`master`) che tramite `Ansible` potrà controllare, comandare, installare pacchetti e gestire le altre 2 macchine (`slave1` e `slave2`). 
 Le 3 macchine devono essere collegate tra loro in una `rete Docker`. 
 Nella macchina `master` deve essere configurato `Ansible` affinché possa lanciare i comandi alle altre 2 macchine. 
-Nella macchina `master` deve essere presente volume che viene montato in `/etc/ansible` e che contiene tutti i file di Ansible che voglio usare.
 
 
 # Soluzione docker-compose
@@ -181,12 +180,7 @@ sshpass -p root ssh-copy-id root@slave2
 Sempre all'interno del container `master` eseguire il playbook di Ansible:
 ```bash
 docker exec -it master bash
-ansible -m ping slaves                             # Verifica la connessione con le slave
-ansible slave1 -m shell -a "git --version"         # Verifica se il task di installazione di git è stato eseguito
-ansible all -m shell -a "systemctl status apache2" # Verifica lo stato di Apache2 su tutte le macchine
-ansible all -m shell -a "mysql --version"         # Verifica se MySQL è installato su tutte le macchine
-
-
+ansible -m ping slaves                     # Verifica la connessione con le slave
 ansible-playbook /etc/ansible/playbook.yml # Esegui il playbook sulle slave
 ```
 
