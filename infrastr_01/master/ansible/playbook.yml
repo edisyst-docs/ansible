@@ -1,5 +1,8 @@
 ---
 - hosts: slave1
+  vars:
+    symfony_root_dir: "/var/www/symfony"
+
   become: true
   tasks:
     - name: Test connessione Ansible
@@ -83,30 +86,83 @@
     - name: Clonare repository Symfony
       git:
         repo: 'https://github.com/symfony/skeleton.git'
-        dest: /var/www/symfony
+        dest: "{{ symfony_root_dir }}"
 
 #    - name: Installare dipendenze Symfony
 #      shell: cd /var/www/symfony && composer install
 
     - name: Impostare permessi
       file:
-        path: /var/www/symfony
+        path: "{{ symfony_root_dir }}"
         owner: www-data
         group: www-data
+        mode: "0755"
         recurse: yes
 
     - name: Creare VirtualHost per Symfony
       copy:
         dest: /etc/apache2/sites-available/symfony.conf
         content: |
-          <VirtualHost *:80>
-              ServerAdmin webmaster@localhost
-              DocumentRoot /var/www/symfony/public
-              <Directory /var/www/symfony/public>
-                  AllowOverride All
-                  Require all granted
-              </Directory>
-          </VirtualHost>
+            <VirtualHost *:80>
+                ServerName localhost
+                DocumentRoot {{ symfony_root_dir }}/public
+                
+                <Directory {{ symfony_root_dir }}/public>
+                    AllowOverride All
+                    Require all granted
+                </Directory>
+                
+                ErrorLog ${APACHE_LOG_DIR}/error.log
+                CustomLog ${APACHE_LOG_DIR}/access.log combined
+            </VirtualHost>
 
 #    - name: Abilitare VirtualHost e riscrittura mod_rewrite
 #      shell: a2ensite symfony.conf && a2enmod rewrite && systemctl restart apache2
+
+###################################################################################
+    - name: Installare le dipendenze PHP con Composer
+      command: composer install --no-dev --optimize-autoloader
+      args:
+        chdir: "{{ symfony_root_dir }}"
+
+    - name: Creare il file .env
+      copy:
+        dest: "{{ symfony_root_dir }}/.env"
+        content: |
+          APP_ENV=prod
+          APP_SECRET=1234567890abcdef
+          DATABASE_URL=mysql://root:password@127.0.0.1:3306/symfony_db
+#    - name: Copiare .env.example in .env
+#      command: cp "{{ symfony_root_dir }}/.env.example" "{{ symfony_root_dir }}/.env"
+#      args:
+#        creates: "{{ symfony_root_dir }}/.env"
+
+
+    - name: Modificare la configurazione di Doctrine
+      lineinfile:
+        path: "{{ symfony_root_dir }}/config/packages/doctrine.yaml"
+        regexp: '^url: '
+        line: 'url: '%env(DATABASE_URL)%'
+
+
+
+
+
+
+
+
+
+
+
+
+
+#    - name: Avviare il server Symfony
+#      command: "php bin/console server:run 0.0.0.0:8000"
+#      args:
+#        chdir: "{{ symfony_root_dir }}"
+#
+#    - name: Abilitare il sito Symfony in Apache
+#      command: a2ensite symfony
+#
+#    - name: Riavviare Apache
+#      shell: apachectl restart
