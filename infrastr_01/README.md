@@ -5,12 +5,11 @@ Le 3 macchine devono essere collegate tra loro in una `rete Docker`.
 Nella macchina `master` deve essere configurato `Ansible` affinché possa lanciare i comandi alle altre 2 macchine.
 
 
-# Soluzione docker-compose
+# Soluzione con docker-compose
 Per creare una infrastruttura Docker con una macchina `master` che utilizza `Ansible` per gestire due macchine `slave`,
-è più conveniente utilizzare `Docker Compose`.
-`Docker Compose` consente di gestire facilmente la configurazione della rete e dei container.
+è più conveniente utilizzare `Docker Compose`, che consente di gestire facilmente la configurazione della rete e dei container.
 
-Ecco i passaggi dettagliati per configurare questa infrastruttura:
+Ecco i passaggi per configurare l'infrastruttura:
 
 ### 1. Creare il file docker-compose.yml
 Nella directory principale del progetto, crea un file `docker-compose.yml`:
@@ -46,7 +45,6 @@ Crea le seguenti directory: `master` e `slave`.
 mkdir master slave
 ```
 
-
 ### 3. Creare i Dockerfile per master e slave:
 - Dockerfile per il master (`master/Dockerfile`):
 ```dockerfile
@@ -74,35 +72,8 @@ COPY ansible/ /etc/ansible/
 
 CMD ["/usr/sbin/sshd", "-D"]
 ```
-Alternativamente, possiamo usare un altro metodo per aggiungere la configurazione SSH senza includere caratteri indesiderati:
-```dockerfile
-FROM ubuntu:latest
 
-# Install necessary packages
-RUN apt-get update && \
-    apt-get install -y ansible openssh-client openssh-server sshpass && \
-    apt-get clean
-
-# Create required directory for SSH
-RUN mkdir -p /run/sshd
-
-# Create Ansible directory
-RUN mkdir -p /etc/ansible
-
-# Generate SSH keys for the master
-RUN ssh-keygen -q -N "" -f /root/.ssh/id_rsa
-
-# Add ssh config to disable host key checking
-RUN echo "Host *" > /root/.ssh/config && \
-    echo "    StrictHostKeyChecking no" >> /root/.ssh/config
-
-# Copy the Ansible configuration files
-COPY ansible/ /etc/ansible/
-
-CMD ["/usr/sbin/sshd", "-D"]
-```
-
-- Dockerfile per le slave (`slave/Dockerfile` e `slave2/Dockerfile`):
+- Dockerfile per le slave (`slave/Dockerfile`):
 ```dockerfile
 FROM ubuntu:latest
 
@@ -120,23 +91,22 @@ CMD ["/usr/sbin/sshd", "-D"]
 ```
 
 ### 4.  Configurare Ansible nel master:
-Crea i file di configurazione di Ansible nella directory **master/ansible**.
-
-`master/ansible/ansible.cfg`: Configura Ansible per eseguire i comandi in modalità locale.
+Crea i file di configurazione di Ansible nella directory `master/ansible`.
+- `master/ansible/ansible.cfg`: Configura Ansible per eseguire i comandi in modalità locale.
 ```ini
 [defaults]
 inventory = /etc/ansible/hosts
 host_key_checking = False
 ```
 
-`master/ansible/hosts`: Definisci gli host su cui eseguire i comandi.
+- `master/ansible/hosts`: Definisce gli host su cui eseguire i comandi.
 ```ini
 [slaves]
 slave1 ansible_host=slave1
 slave2 ansible_host=slave2
 ```
 
-`master/ansible/playbook.yml`: Definisci i comandi da eseguire sulle macchine slave.
+- `master/ansible/playbook.yml`: Definisce i comandi da eseguire sulle macchine slave.
 ```yaml
 ---
 - hosts: slaves
@@ -154,15 +124,12 @@ slave2 ansible_host=slave2
 Nella directory principale del progetto, esegui il comando:
 ```bash
 docker-compose up --build
-```
-Verificare che tutti i container siano in esecuzione:
-```bash
-docker ps
+docker ps   # Verifica che tutti i container siano in esecuzione
 ```
 
 
 ## 6. Copiare manualmente la chiave SSH:
-Accedere al container `master` tramite il comando:
+Accedere al container `master`:
 ```bash
 docker exec -it master bash
 ```
