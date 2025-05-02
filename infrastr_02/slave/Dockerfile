@@ -1,6 +1,6 @@
 FROM ubuntu:latest
 
-# Install SSH server and Python (richiesto per Ansible)
+# Install SSH server and Python
 RUN apt-get update && \
     apt-get install -y openssh-server python3 sudo && \
     apt-get clean
