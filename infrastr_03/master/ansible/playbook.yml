@@ -1,11 +1,36 @@
 ---
-- hosts: slaves
+- hosts: slave1
+  vars:
+    laravel_root_dir: /var/www/laravel
+
+  become: true
+
   tasks:
-#    - name: Prova PING
-#      ping:
-    - name: Ensure Python is installed
+#    - name: Test command
+#      command: echo "Hello from {{ inventory_hostname }}"
+    - name: Verifica connessione a MySQL
+      shell: mysql -h mysql -u root -p'rootpassword' -e 'SHOW DATABASES;'
+
+    - name: Installa pymysql se non presente
       apt:
-        name: python3
+        name: python3-pymysql
         state: present
-    - name: Test command
-      command: echo "Hello from {{ inventory_hostname }}"
+
+    - name: Crea database Laravel
+      community.mysql.mysql_db:
+        name: laravel_db
+        state: present
+        login_host: mysql
+        login_user: root
+        login_password: rootpassword
+
+    - name: Crea utente Laravel
+      community.mysql.mysql_user:
+        name: laravel_user
+        password: laravelpass
+        priv: 'laravel_db.*:ALL'
+        host: '%'
+        state: present
+        login_host: mysql
+        login_user: root
+        login_password: rootpassword
