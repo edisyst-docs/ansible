@@ -159,15 +159,11 @@ Questa infrastruttura aggiunge al docker-compose.yml, i seguenti servizi:
 - un'istanza di un DB mysql, con un suo volume (dove salvare i dati e i DB)
 - un'istanza di phpmyadmin (per avere un'interfaccia dei DB del container mysql)
 - su master e slave installo il pacchetto mysql-client, per poter interagire con il DB mysql da dentro quei container (se installo Laravel sugli slave, dovrò installare anche il mysql)
-
+- il playbook si incazza al composer perchè stò clonando un repo Laravel 8 in php 8.0 mentre stò installando sugli slave php 8.3
+  - ma di per sè l'infrastruttura funziona
+  
 
 ## 8. Verificare l'infrastruttura aggiornata
-
-Il pacchetto mysql lo installo con il comando:
-```bash 
-RUN apt-get update && apt-get install -y mysql-client
-```
-
 Avvio il docker-compose con il comando:
 ```bash
 docker-compose up -d
@@ -192,15 +188,11 @@ docker exec -it slave1 bash
 mysql -h mysql -u root -p
 ```
 * `-h mysql`: il nome del container MySQL (Docker risolve tramite hostname nel network)
-* Se vedi il prompt `mysql>`, è tutto OK ✅
+* Se vedi il prompt `mysql>`, è tutto OK 
 
 
 ### Accesso via phpMyAdmin da browser
-Hai esposto phpmyadmin sulla `porta 8080:80` nel `docker-compose.yml`, quindi lo trovi all'url
-```bash
-http://127.0.0.1:8080
-```
-oppure all’indirizzo `IP della macchina Docker` (se usi VM)
+Hai esposto phpmyadmin sulla `porta 8080:80` nel `docker-compose.yml`, quindi lo trovi all'url `http://127.0.0.1:8080` 
 
 Credenziali di accesso:
 ```bash
@@ -213,21 +205,7 @@ Password: rootpassword # o quella che hai impostato nel Dockerfile di MySQL
 Nel container `master` puoi fare:
 ```bash
 docker exec -it master bash
-
 apt update && apt install -y mysql-client
 mysql -h mysql -u root -p
 ```
-oppure, se vuoi testare da Ansible, aggiungi nel playbook il task:
-```yaml
-- name: Verifica connessione a MySQL
-  shell: mysql -h mysql -u root -p'rootpassword' -e 'SHOW DATABASES;'
-```
 
-
-
-# RIPRENDERE DA QUIIIIIIIIIIII
-🧠 Assicurati di avere la collection community.mysql installata nel container master:
-
-```bash
-ansible-galaxy collection install community.mysql
-```
